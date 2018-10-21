@@ -1,6 +1,21 @@
 \documentclass{article}
+
 \usepackage{proof}
 \usepackage{amsmath,amssymb,amsthm,textcomp}
+\usepackage{fullpage}
+
+\newcommand{\var}{\mathbf{Var}}
+\newcommand{\state}{\mathbf{State}}
+\newcommand{\comm}{\mathbf{Comm}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\Aa}[2]{\mathcal{A}\left[#1\right]\left[#2\right]}
+\newcommand{\N}{\mathcal{N}}
+\newcommand{\true}{\mathbf{tt}}
+\newcommand{\false}{\mathbf{ff}}
+\newcommand{\expr}{\mathbf{exp}}
+\newcommand{\Rule}[3]{\infer[\textsc{#1}]{#2}{#3}}
+
+\newcommand{\ie}{\emph{i.e.}}
 
 
 \title{Homework SOS}
@@ -9,11 +24,67 @@
 
 \begin{document}
 
+\maketitle
+
 \section*{Question 1}
-\textsc{Rule 1}\quad\infer{A}{B & C}
+
+%\textsc{Rule 1}\quad\infer{A}{B & C}
+
+We define the $\state{}$ domain as follows:
+
+\[
+\state{} = \left(\var{}  \longrightarrow \mathbb{Z} \right) \times \left( \mathbb{N} \longrightarrow \mathbb{Z} \right)
+\]
+
+\ie{} each variable is assigned to an integer value, and each address of the memory (which is a natural) is mapped to an integer.
+
+We then define our set of configurations:
+
+\[
+\Gamma = \lbrace \left( c, (\sigma, \delta) \right) \mid c \in \comm{}, (\sigma, \delta) \in \state{} \rbrace \cup \Gamma_{final}
+\]
+
+where $\Gamma_{final} = \state{}$.
+
+We define the denotational semantics of expressions $\A{}: \expr{} \longrightarrow \state{} \longrightarrow \mathbb{Z} \cup \mathbb{B}$ recursively as follows:
+
+\begin{align*}
+	\Aa{x}{\sigma, \delta} &= \sigma(x) \\
+	\Aa{n}{\sigma, \delta} &= \N(n) \\
+	\Aa{e_1 \circ e_2}{\sigma, \delta} &= \Aa{e_1}{\sigma, \delta} \bullet \Aa{e_2}{\sigma, \delta} \\
+	\Aa{\texttt{true}}{\sigma, \delta} &= \true{} \\
+	\Aa{\texttt{false}}{\sigma, \delta} &= \false{} \\
+	\Aa{\texttt{not}~e}{\sigma, \delta} &= \neg \Aa{e}{\sigma, \delta} \\
+	\Aa{e1~\texttt{and}~e_2}{\sigma, \delta} &= \Aa{e_1}{\sigma, \delta} \wedge \Aa{e_2}{\sigma, \delta} \\
+	\Aa{e1~\texttt{or}~e_2}{\sigma, \delta} &= \Aa{e_1}{\sigma, \delta} \vee \Aa{e_2}{\sigma, \delta} \\
+	\Aa{[e]}{\sigma, \delta} &= \delta(\sigma(e)) \\
+\end{align*}
+
+where $\bullet \in \lbrace +, -, \times, =, \leq \rbrace$ is the semenatic operator associated to the syntaxic operator $\circ$.
+
+We can now define a structural operational semantics of commands:
+
+\[
+	\Rule{Skip}{\texttt{skip}, \sigma, \delta \longrightarrow \sigma, \delta}{} \hspace*{1cm}
+	\Rule{Seq1}{c_1 ; c_2, \sigma, \delta \longrightarrow c_2, \sigma', \delta'}{c_1, \sigma, \delta \longrightarrow \sigma', \delta'} \hspace*{1cm}
+	\Rule{Seq2}{c_1 ; c_2, \sigma, \delta \longrightarrow c_1 ; c_2, \sigma', \delta'}{c_1, \sigma, \delta \longrightarrow c_1', \sigma', \delta'}
+\]
+\[
+	\Rule{AssignVar}{x := e, \sigma, \delta \longrightarrow \sigma[x \mapsto \Aa{e}{\sigma, \delta}], \delta}{x \in \var{}} \hspace*{1cm}
+	\Rule{AssignMem}{[e_1] := e_2, \sigma, \delta \longrightarrow \sigma, \delta[\Aa{e_1}{\sigma, \delta} \mapsto \Aa{e_2}{\sigma, \delta}]}{}
+\]
+\[
+	\Rule{If1}{\texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2, \sigma, \delta \longrightarrow c_1, \sigma, \delta}{} \quad \text{if $\Aa{e}{\sigma, \delta} = \true{}$}
+\]
+\[
+	\Rule{If2}{\texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2, \sigma, \delta \longrightarrow c_2, \sigma, \delta}{} \quad \text{if $\Aa{e}{\sigma, \delta} = \false{}$}
+\]
+\[
+	\Rule{While}{\texttt{while}~e~\texttt{do}~c, \sigma, \delta \longrightarrow \texttt{if}~e~\texttt{then}~(c; \texttt{while}~e~\texttt{do}~c)~\texttt{else}~\texttt{skip}, \sigma, \delta}{} 
+\]
 
 \section*{Question 2}
-
+	
 \section*{Question 3}
 
 
