@@ -60,7 +60,7 @@ We define the denotational semantics of expressions $\A{}: \expr{} \longrightarr
 	\Aa{[e]}{\sigma, \delta} &= \delta(\sigma(e)) \\
 \end{align*}
 
-where $\bullet \in \lbrace +, -, \times, =, \leq \rbrace$ is the semenatic operator associated to the syntaxic operator $\circ$.
+where $\bullet \in \lbrace +, -, \times, =, \leq \rbrace$ is the semantic operator associated to the syntaxic operator $\circ$. $\A{}$ is a partial function. For instance, $\vee$ is defined as usual, only on boolean values.
 
 We can now define a structural operational semantics of commands:
 
@@ -82,6 +82,24 @@ We can now define a structural operational semantics of commands:
 \[
 	\Rule{While}{\texttt{while}~e~\texttt{do}~c, \sigma, \delta \longrightarrow \texttt{if}~e~\texttt{then}~(c; \texttt{while}~e~\texttt{do}~c)~\texttt{else}~\texttt{skip}, \sigma, \delta}{} 
 \]
+
+\paragraph{Comments}
+We define our $\state$ domain as a cartesian product for readability, the second function only describing the memory.
+Final configurations are simply states, with no more commands to execute.
+
+As expressions define both booleans and integer expressions, our $\A{}$ function can be evaluated in $\mathbb{Z}$ or $\mathbb{B}$.
+
+Our semantics is defined such that some programs may not evaluate to a final configuration. We give below a few examples:
+
+\texttt{[-3] := 0} won't evaluate, because for any state $(\sigma,\delta)$, $\delta$ is only defined on $\mathbb{N}$. Thus the \textsc{AssignMem} rule can't be applied.
+
+\texttt{x := true + 2} won't make any progress, because $\Aa{true + 2}{\sigma,\delta}$ isn't defined for any $(\delta,\sigma)$.
+
+\texttt{if 1 then c\_1 else c\_2} won't make any progress, because $\Aa{1}{\sigma,\delta}$ is neither equal to \textbf{tt} nor \textbf{ff}.
+
+Another solution could be to allow such programs to progress to an error final configuration, displaying an adequate error message.
+
+Our structural operational semantics is partial and deterministic.
 
 \section*{Question 2}
 	
