@@ -112,10 +112,8 @@ We now introduce three different types in our system:
 	\itemsep0em
 	\item[--] $\Int{}$: denotes integer values
 	\item[--] $\Ref{}$: denotes references \ie{} memory addresses
-	\item[--] $\Bool{}$: denotes boolean values (true or false)
+	\item[--] $\Bool{}$: denotes boolean values (that evaluate to true or false)
 \end{itemize}
-
-We make choices regarding pointer arithmetic: todo
 
 We define the following typing rules for expressions, given a context $A$:
 
@@ -190,7 +188,27 @@ We can now give the type judgment for each command in the typing context $A$:
 \hspace*{1cm}
 	\Rule{While}{A \vdash \texttt{while}~e~\texttt{do}~c}{A \vdash e: \Bool \quad A \vdash c} 
 \]
-	
+
+
+\paragraph{Comments}
+
+A program $c$ is said to be well-typed if there exists some context $A$ such that $A\vdash c$.
+A typing context is a set of pairs of variables and types $\{x:T\}$, meaning that variable $x$ has type $T$, and such that each $x$ appears at most once.
+There are simple ways to find statically such a typing context whenever it exists: start with an empty context and add new pairs as you look through the program. The only ambiguity appears when dealing with variables defined with positive constants, as they could be both $\Int$ or $\Ref$. In that case, type them $\Ref$, and you may use the \textsc{CastRefToInt} rule whenever you need an $\Int$.
+
+Our typing system prevents negative constants to be used as references.
+This rules out a few programs that could have blocking semantics.
+Our reference arithmetic still allows multiplication, addition and substraction, meaning that some well-typed programs can still go wrong.
+A solution to this issue is to forbid substraction when dealing with references, but we decided against to keep ``reasonable'' pointer arithmetics.
+
+The expression typing rules are as expected, and we can't mix boolean values with integers values for instance. Thus, the program \texttt{x := 1 + true} won't be well-typed. A good property of our type system is the following:\\
+
+$\forall e\text{ expression without memory access}, \forall A\text{ context}, \forall T\text { type}, \forall \delta, \forall \sigma \text{ defined on all variables of e},$
+$$A\vdash e : T\implies \Aa{e}{\sigma,\delta}\text{ is defined}.$$
+
+
+TODO: change le nom du contexte de A à gamma pour ne pas confondre avec la fonction sémantique. Preuve de la propriété de typage. Ajouter une propriété sur la progression d'un programme (pas seulement pour les expressions).
+
 \section*{Question 3}
 
 
