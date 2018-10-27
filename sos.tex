@@ -4,10 +4,15 @@
 \usepackage{amsmath,amssymb,amsthm,textcomp}
 \usepackage{fullpage}
 
+\newtheorem{thm}{Theorem}
+
+\usepackage{todonotes}
+
 \newcommand{\var}{\mathbf{Var}}
 \newcommand{\state}{\mathbf{State}}
 \newcommand{\comm}{\mathbf{Comm}}
 \newcommand{\A}{\mathcal{A}}
+\newcommand{\C}{\mathcal{C}}
 \newcommand{\Aa}[2]{\mathcal{A}\left[#1\right]\left[#2\right]}
 \newcommand{\N}{\mathcal{N}}
 \newcommand{\true}{\mathbf{tt}}
@@ -44,10 +49,10 @@ We define the $\state{}$ domain as follows:
 We then define our set of configurations:
 
 \[
-\Gamma = \lbrace \left( c, (\sigma, \delta) \right) \mid c \in \comm{}, (\sigma, \delta) \in \state{} \rbrace \cup \Gamma_{final}
+\C = \lbrace \left( c, (\sigma, \delta) \right) \mid c \in \comm{}, (\sigma, \delta) \in \state{} \rbrace \cup \C_{final}
 \]
 
-where $\Gamma_{final} = \state{}$.
+where $\C_{final} = \state{}$.
 
 We define the denotational semantics of expressions $\A{}: \expr{} \longrightarrow \state{} \longrightarrow \mathbb{Z} \cup \mathbb{B}$ recursively as follows:
 
@@ -72,16 +77,23 @@ We can now define a structural operational semantics of commands:
 	\Rule{Seq1}{c_1 ; c_2, \sigma, \delta \longrightarrow c_2, \sigma', \delta'}{c_1, \sigma, \delta \longrightarrow \sigma', \delta'} \hspace*{1cm}
 	\Rule{Seq2}{c_1 ; c_2, \sigma, \delta \longrightarrow c_1 ; c_2, \sigma', \delta'}{c_1, \sigma, \delta \longrightarrow c_1', \sigma', \delta'}
 \]
+\\
 \[
-	\Rule{AssignVar}{x := e, \sigma, \delta \longrightarrow \sigma[x \mapsto \Aa{e}{\sigma, \delta}], \delta}{x \in \var{}} \hspace*{1cm}
+	\Rule{AssignVar}{x := e, \sigma, \delta \longrightarrow \sigma[x \mapsto \Aa{e}{\sigma, \delta}], \delta}{x \in \var{}}
+\]
+\\
+\[
 	\Rule{AssignMem}{[e_1] := e_2, \sigma, \delta \longrightarrow \sigma, \delta[\Aa{e_1}{\sigma, \delta} \mapsto \Aa{e_2}{\sigma, \delta}]}{}
 \]
+\\
 \[
 	\Rule{If1}{\texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2, \sigma, \delta \longrightarrow c_1, \sigma, \delta}{} \quad \text{if $\Aa{e}{\sigma, \delta} = \true{}$}
 \]
+\\
 \[
 	\Rule{If2}{\texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2, \sigma, \delta \longrightarrow c_2, \sigma, \delta}{} \quad \text{if $\Aa{e}{\sigma, \delta} = \false{}$}
 \]
+\\
 \[
 	\Rule{While}{\texttt{while}~e~\texttt{do}~c, \sigma, \delta \longrightarrow \texttt{if}~e~\texttt{then}~(c; \texttt{while}~e~\texttt{do}~c)~\texttt{else}~\texttt{skip}, \sigma, \delta}{} 
 \]
@@ -112,102 +124,120 @@ We now introduce three different types in our system:
 	\itemsep0em
 	\item[--] $\Int{}$: denotes integer values
 	\item[--] $\Ref{}$: denotes references \ie{} memory addresses
-	\item[--] $\Bool{}$: denotes boolean values (that evaluate to true or false)
+	\item[--] $\Bool{}$: denotes boolean values (that evaluates to true or false)
 \end{itemize}
 
-We define the following typing rules for expressions, given a context $A$:
+We define the following typing rules for expressions, given a context $\Gamma$:
 
 \[
-\Rule{CstInt}{A \vdash n: \Int}{}
+\Rule{CstInt}{\Gamma \vdash n: \Int}{}
 \hspace*{1cm}
-\Rule{CstRef}{A \vdash n: \Ref}{} \quad \text{if $\N(n) \geq 0$}
+\Rule{CstRef}{\Gamma \vdash n: \Ref}{} \quad \text{if $\N(n) \geq 0$}
 \]
 
 \[
-\Rule{CstTrue}{A \vdash \texttt{true}: \Bool}{}
+\Rule{CstTrue}{\Gamma \vdash \texttt{true}: \Bool}{}
 \hspace*{1cm}
-\Rule{CstFalse}{A \vdash \texttt{false}: \Bool}{}
+\Rule{CstFalse}{\Gamma \vdash \texttt{false}: \Bool}{}
 \]
 
 \[
-\Rule{Var}{A \vdash x: T}{\lbrace x: T \rbrace \in A}
+\Rule{Var}{\Gamma \vdash x: T}{\lbrace x: T \rbrace \in \Gamma}
 \hspace*{1cm}
-\Rule{CastRefToInt}{A \vdash x: \Int}{A \vdash x: \Ref}
+\Rule{CastRefToInt}{\Gamma \vdash x: \Int}{\Gamma \vdash x: \Ref}
 \]
 
 \[
-\Rule{AddInt}{A \vdash e_1 + e_2: \Int}{A \vdash e_1: \Int \quad A \vdash e_2: \Int}
+\Rule{AddInt}{\Gamma \vdash e_1 + e_2: \Int}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
 \hspace*{1cm}
-\Rule{AddRef}{A \vdash e_1 + e_2: \Ref}{A \vdash e_1: \Ref \quad A \vdash e_2: \Ref}
+\Rule{AddRef}{\Gamma \vdash e_1 + e_2: \Ref}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
 \]
 
 \[
-\Rule{SubInt}{A \vdash e_1 - e_2: \Int}{A \vdash e_1: \Int \quad A \vdash e_2: \Int}
+\Rule{SubInt}{\Gamma \vdash e_1 - e_2: \Int}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
 \hspace*{1cm}
-\Rule{SubRef}{A \vdash e_1 - e_2: \Ref}{A \vdash e_1: \Ref \quad A \vdash e_2: \Ref}
+\Rule{SubRef}{\Gamma \vdash e_1 - e_2: \Ref}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
 \]
 
 \[
-\Rule{TimesInt}{A \vdash e_1 \times e_2: \Int}{A \vdash e_1: \Int \quad A \vdash e_2: \Int}
+\Rule{TimesInt}{\Gamma \vdash e_1 \times e_2: \Int}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
 \hspace*{1cm}
-\Rule{TimesRef}{A \vdash e_1 \times e_2: \Ref}{A \vdash e_1: \Ref \quad A \vdash e_2: \Ref}
+\Rule{TimesRef}{\Gamma \vdash e_1 \times e_2: \Ref}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
 \]
 
 \[
-\Rule{EqInt}{A \vdash e_1 = e_2: \Bool}{A \vdash e_1: \Int \quad A \vdash e_2: \Int}
+\Rule{EqInt}{\Gamma \vdash e_1 = e_2: \Bool}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
 \hspace*{1cm}
-\Rule{EqRef}{A \vdash e_1 = e_2: \Bool}{A \vdash e_1: \Ref \quad A \vdash e_2: \Ref}
+\Rule{EqRef}{\Gamma \vdash e_1 = e_2: \Bool}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
 \]
 
 \[
-\Rule{CompInt}{A \vdash e_1 \leq e_2: \Bool}{A \vdash e_1: \Int \quad A \vdash e_2: \Int}
+\Rule{CompInt}{\Gamma \vdash e_1 \leq e_2: \Bool}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
 \hspace*{1cm}
-\Rule{CompRef}{A \vdash e_1 \leq e_2: \Bool}{A \vdash e_1: \Ref \quad A \vdash e_2: \Ref}
+\Rule{CompRef}{\Gamma \vdash e_1 \leq e_2: \Bool}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
 \]
 
 \[
-\Rule{And}{A \vdash e_1~\texttt{and}~e_2: \Bool}{A \vdash e_1: \Bool \quad A \vdash e_2: \Bool}
+\Rule{And}{\Gamma \vdash e_1~\texttt{and}~e_2: \Bool}{\Gamma \vdash e_1: \Bool \quad \Gamma \vdash e_2: \Bool}
 \hspace*{1cm}
-\Rule{Or}{A \vdash e_1~\texttt{or}~e_2: \Bool}{A \vdash e_1: \Bool \quad A \vdash e_2: \Bool}
+\Rule{Or}{\Gamma \vdash e_1~\texttt{or}~e_2: \Bool}{\Gamma \vdash e_1: \Bool \quad \Gamma \vdash e_2: \Bool}
 \hspace*{1cm}
-\Rule{Not}{A \vdash \texttt{not}~e: \Bool}{A \vdash e: \Bool}
+\Rule{Not}{\Gamma \vdash \texttt{not}~e: \Bool}{\Gamma \vdash e: \Bool}
 \]
 
-We can now give the type judgment for each command in the typing context $A$:
+We can now give the type judgment for each command in the typing context $\Gamma$:
 
 \[
-	\Rule{Skip}{A \vdash \texttt{skip}}{} \hspace*{1cm}
-	\Rule{Seq}{A \vdash c_1 ; c_2}{A \vdash c_1 \quad A \vdash c_2}
+	\Rule{Skip}{\Gamma \vdash \texttt{skip}}{} \hspace*{1cm}
+	\Rule{Seq}{\Gamma \vdash c_1 ; c_2}{\Gamma \vdash c_1 \quad \Gamma \vdash c_2}
 \]
 \[
-	\Rule{AssignVar}{A \vdash x := e}{A \vdash x: T \quad A \vdash e: T} \hspace*{1cm}
-	\Rule{AssignMem}{A \vdash [e_1] := e_2}{A \vdash e_1: \Ref \quad A \vdash e_2: \Int}
+	\Rule{AssignVar}{\Gamma \vdash x := e}{\Gamma \vdash x: T \quad \Gamma \vdash e: T} \hspace*{1cm}
+	\Rule{AssignMem}{\Gamma \vdash [e_1] := e_2}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Int}
 \]
 \[
-	\Rule{If}{A \vdash \texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2}{A \vdash e: \Bool \quad A \vdash c_1 \quad A \vdash c_2}
+	\Rule{If}{\Gamma \vdash \texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2}{\Gamma \vdash e: \Bool \quad \Gamma \vdash c_1 \quad \Gamma \vdash c_2}
 \hspace*{1cm}
-	\Rule{While}{A \vdash \texttt{while}~e~\texttt{do}~c}{A \vdash e: \Bool \quad A \vdash c} 
+	\Rule{While}{\Gamma \vdash \texttt{while}~e~\texttt{do}~c}{\Gamma \vdash e: \Bool \quad \Gamma \vdash c} 
 \]
 
 
 \paragraph{Comments}
 
-A program $c$ is said to be well-typed if there exists some context $A$ such that $A\vdash c$.
+A program $c$ is said to be well-typed if there exists some context $\Gamma$ such that $\Gamma\vdash c$.
 A typing context is a set of pairs of variables and types $\{x:T\}$, meaning that variable $x$ has type $T$, and such that each $x$ appears at most once.
 There are simple ways to find statically such a typing context whenever it exists: start with an empty context and add new pairs as you look through the program. The only ambiguity appears when dealing with variables defined with positive constants, as they could be both $\Int$ or $\Ref$. In that case, type them $\Ref$, and you may use the \textsc{CastRefToInt} rule whenever you need an $\Int$.
 
 Our typing system prevents negative constants to be used as references.
 This rules out a few programs that could have blocking semantics.
-Our reference arithmetic still allows multiplication, addition and substraction, meaning that some well-typed programs can still go wrong.
-A solution to this issue is to forbid substraction when dealing with references, but we decided against to keep ``reasonable'' pointer arithmetics.
+Our reference arithmetic still allows multiplication, addition and subtraction, meaning that some well-typed programs can still go wrong.
+A solution to this issue is to forbid subtraction when dealing with references, but we decided against to keep ``reasonable'' pointer arithmetic.
 
 The expression typing rules are as expected, and we can't mix boolean values with integers values for instance. Thus, the program \texttt{x := 1 + true} won't be well-typed. A good property of our type system is the following:\\
 
-$\forall e\text{ expression without memory access}, \forall A\text{ context}, \forall T\text { type}, \forall \delta, \forall \sigma \text{ defined on all variables of e},$
-$$A\vdash e : T\implies \Aa{e}{\sigma,\delta}\text{ is defined}.$$
+\begin{thm}[Typing of Expressions]
+For all expression $e$ without memory access, context $\Gamma$, type $T$ and state $(\sigma, \delta)$ defined on all variables $x$ that appear in e, we have:
+\[
+\Gamma\vdash e : T\implies \Aa{e}{\sigma,\delta}\text{ is defined}.
+\]
+\end{thm}
 
+\begin{proof}
+\todo{todo, induction}
+\end{proof}
 
-TODO: change le nom du contexte de A à gamma pour ne pas confondre avec la fonction sémantique. Preuve de la propriété de typage. Ajouter une propriété sur la progression d'un programme (pas seulement pour les expressions).
+\begin{thm}[Progress]
+For all program $c$, context $\Gamma$ and initial state $(\sigma_0, \delta_0) \in \state{}$, we have:
+\[
+\Gamma \vdash c \implies \exists (\sigma, \delta) \in \state{} \quad c, \sigma_0, \delta_0 \longrightarrow \sigma, \delta
+\]
+\end{thm}
+
+\begin{proof}
+\todo{todo, induction + theorem expression typing}
+not true if Ref subtraction?
+\end{proof}
+
 
 \section*{Question 3}
 
