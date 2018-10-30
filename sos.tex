@@ -229,24 +229,33 @@ For all expression $e$, context $\Gamma$, type $T$ and state $(\sigma, \delta)$ 
 \]
 \end{thm}
 
-\begin{proof}
-\todo{todo, induction}
+\begin{proof}[Proof Idea]
+This can be proved by induction on $\Gamma\vdash' e$. Because we don't allow substraction in References, References are guaranteed to be positive (defined only with positive constants, addition and multiplication). Furthermore, we know that $\delta$ is a total function of $\mathbb{N}$. Because $\sigma$ is well-defined with regards to $\Gamma$, $\sigma$ is defined with the correct type on each variable of $e$.
 \end{proof}
 
 
 \begin{thm}[Progress]
 For all program $c$, context $\Gamma$ and initial state $(\sigma_0, \delta_0) \in \state{}$ such that $\sigma_0$ well-defined with regards to $\Gamma$, we have:
-\[
-\Gamma \vdash' c \implies \exists (\sigma, \delta) \in \state{} \quad c, \sigma_0, \delta_0 \longrightarrow \sigma, \delta
-\]
+
+\begin{align*}
+  \Gamma \vdash' c \implies & \exists (\sigma, \delta) \in \state{}, \exists c', \quad c, \sigma_0, \delta_0 \longrightarrow c',\sigma, \delta \text{ and $\delta_0$ is well-defined with regards to $\Gamma$\quad} \\
+  & \textbf{or}~ \exists (\sigma, \delta) \in \state{}, \quad c, \sigma_0, \delta_0 \longrightarrow \sigma, \delta
+\end{align*}
+
 \end{thm}
 
-\begin{proof}
-\todo{todo, induction + theorem expression typing}
-not true if Ref subtraction?
+\begin{proof}[Proof Idea]
+  This can be proved by induction on $\Gamma \vdash' c$. For instance, if $c=c_1;c_2$, then with the \textsc{Seq} typing rule, $\Gamma\vdash' c_1$ and $\Gamma\vdash' c_2$.
+  Then by induction, either there exists $\sigma,\delta,c'$ such that $c,\sigma_0,\delta_0\longrightarrow c',\sigma,\delta$, or there exists $\sigma,\delta$ such that $c,\sigma_0,\delta_0\longrightarrow \sigma,\delta$.
+  In the first case, using the \textsc{Seq2} rule, we get that $c,\sigma_0,\delta_0\longrightarrow c,\sigma,\delta$.
+  In the second case, using the \textsc{Seq1} rule, we get that $c,\sigma_0,\delta_0\longrightarrow c_2,\sigma,\delta$.
+
+  The other cases use the \textbf{Theorem 1}: the semantics rules couldn't be applied if the expressions couldn't be evaluated.
+
 \end{proof}
 
-TODO: commentaire de conclusion.
+\paragraph{Conclusion}
+We have defined two typing relations, $\vdash$ and $\vdash'$. The most restrictive one is strong enough to guarantee progress of the well-typed programs. The other one is not guaranteed to catch every error, as pointer substraction is allowed and it is thus possible to access memory at a negative address.
 
 
 \section*{Question 3}
