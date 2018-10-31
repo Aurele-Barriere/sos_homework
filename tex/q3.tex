@@ -62,7 +62,70 @@ We use an approximation function $f: \exp{} \times (\var{} \longrightarrow E) \l
 	Otherwise, for all $x$: $\alpha_{out}^l(x) \mapsto \alpha_{in}^l(x)$
 \end{itemize}
 
-In the former, $f$ is the 
+The function $f$ approximates the domain of the expression depending on the domains of its components and is defined as one would intuitively imagine.
+A few examples are given in \tablename~\ref{tab:approx}.
+
+\begin{table}
+	\centering
+	\begin{tabular}{@{}p{0.15\textwidth}p{0.3\textwidth}p{0.3\textwidth}p{0.15\textwidth}@{}}
+	\toprule
+	Expressions & Cases 1 & Cases 2 & Output \\
+	\midrule
+	$x$ & & & $\alpha_{in}^l(x)$ \\
+	\midrule
+	$n$ & if $\N{n} > 0$ & & $\mathbb{Z}^{+*}$ \\
+	& if $\N{n} = 0$ & & $\lbrace 0 \rbrace$ \\
+	\midrule
+	$e_1 + e_2$ & if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{+}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{+*}$ & $\mathbb{Z}^{+*}$ \\
+	& if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{+}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{-}$ & $\mathbb{Z}$ \\
+	\midrule
+	$e_1 - e_2$ & if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{+}$ & $\mathbb{Z}^{-*}$ \\
+	& if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{+}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{+}$ & $\mathbb{Z}$ \\
+	\midrule
+	$e_1 \times e_2$ & if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & $\mathbb{Z}^{+*}$ \\
+	& if $f(e_1, \alpha_{in}^l) = \mathbb{Z}$ & if $f(e_2, \alpha_{in}^l) = \lbrace 0 \rbrace$ & $\lbrace 0 \rbrace$ \\
+	\midrule
+	$[e]$ & if $f(e, \alpha_{in}^l) = \mathbb{Z}^{+}$ & & $\mathbb{Z}$ \\
+	& if $f(e, \alpha_{in}^l) = \mathbb{Z}$ & & Error \\
+	& if $f(e, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & & Error \\
+	\bottomrule
+	\end{tabular}
+	\caption{Approximation function $f$: a few examples}
+	\label{tab:approx}
+\end{table}
+
+\paragraph{Examples}
+
+We consider the following program: $x:= 1; y:= [x]$.
+The static analysis is quite trivial and returns no error as expected.
+However, if we consider the following program: $x:= 1 - 2; y:= [x]$, we have the following static analysis:
+
+\begin{align*}
+	& \alpha_{in}^1 = \lbrace x: \mathbb{Z}^{+*}, y: \mathbb{Z} \rbrace & \alpha_{out}^1 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} \rbrace \\
+	& \alpha_{in}^2 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} & \alpha_{out}^2 \longrightarrow \text{Error} \\
+\end{align*}
+
+We obtain an error which is satisfying since the program would indeed try to use an invalid memory address.
+We can however notice that the program $x:= 2 - 1; y:= [x]$ would as well return an error whereas there is actually no problem.
+With this static analysis, we get some false negative and discard valid programs but we are sure all memory addresses are valid when no error is returned, \ie{} we get an over-estimation of valid programs regarding this type of errors.
  
 
-\paragraph{Improvements} memory with addresses initialized + booleans
+\paragraph{Improvements} We identify two key points where our static analysis could be improved:
+
+\begin{itemize}
+	\itemsep0em
+	\item[--] Memory values: all memory values are approximated by the domain $\mathbb{Z}$.
+	We could be more precise by considering another function $\beta: E \longrightarrow E$ that would give a domain approximation for the value located in a range of memory addresses.
+	We would need to adapt the rule for $\left[[e_1] := e_2\right]^l$ where we currently do not use $f(e_2, \alpha_{in}^l)$.
+	\item[--] Boolean values: we currently consider the control flow graph but we could also give an abstract domain for booleans and define an approximation function for the different expressions.
+	We then would be more precise and sometimes be able to discard branches that we are actually sure they will not be executed.
+	For instance, the following program, detected currently as invalid, would pass the static analysis: $\texttt{if true then~} x:= [5] \texttt{~else~} x:= [1 - 2]$.
+\end{itemize}
+
+\subsection*{Uninitialized variables}
+
+\todo{comments}
+
+\subsection*{Division by zero}
+
+\todo{comments}
