@@ -1,0 +1,77 @@
+We define the $\state{}$ domain as follows:
+
+\[
+\state{} = \left(\var{}  \longrightarrow \mathbb{Z} \cup \mathbb{B} \right) \times \left( \mathbb{N} \longrightarrow \mathbb{Z} \right)
+\]
+
+\ie{} each variable is assigned to an integer or boolean  value, and each address of the memory (which is a natural) is mapped to an integer.
+
+We then define our set of configurations:
+
+\[
+\C = \lbrace \left( c, (\sigma, \delta) \right) \mid c \in \comm{}, (\sigma, \delta) \in \state{} \rbrace \cup \C_{final}
+\]
+
+where $\C_{final} = \state{}$.
+
+We define the denotational semantics of expressions $\A{}: \expr{} \longrightarrow \state{} \longrightarrow \mathbb{Z} \cup \mathbb{B}$ recursively as follows:
+
+\begin{align*}
+	\Aa{x}{\sigma, \delta} &= \sigma(x) \\
+	\Aa{n}{\sigma, \delta} &= \N(n) \\
+	\Aa{e_1 \circ e_2}{\sigma, \delta} &= \Aa{e_1}{\sigma, \delta} \bullet \Aa{e_2}{\sigma, \delta} \\
+	\Aa{\texttt{true}}{\sigma, \delta} &= \true{} \\
+	\Aa{\texttt{false}}{\sigma, \delta} &= \false{} \\
+	\Aa{\texttt{not}~e}{\sigma, \delta} &= \neg \Aa{e}{\sigma, \delta} \\
+	\Aa{e1~\texttt{and}~e_2}{\sigma, \delta} &= \Aa{e_1}{\sigma, \delta} \wedge \Aa{e_2}{\sigma, \delta} \\
+	\Aa{e1~\texttt{or}~e_2}{\sigma, \delta} &= \Aa{e_1}{\sigma, \delta} \vee \Aa{e_2}{\sigma, \delta} \\
+	\Aa{[e]}{\sigma, \delta} &= \delta(\sigma(e)) \\
+\end{align*}
+
+where $\bullet \in \lbrace +, -, \times, =, \leq \rbrace$ is the semantic operator associated to the syntaxic operator $\circ$. $\A{}$ is a partial function. For instance, $\vee$ is defined as usual, only on boolean values.
+
+We can now define a structural operational semantics of commands:
+
+\[
+	\Rule{Skip}{\texttt{skip}, \sigma, \delta \longrightarrow \sigma, \delta}{} \hspace*{1cm}
+	\Rule{Seq1}{c_1 ; c_2, \sigma, \delta \longrightarrow c_2, \sigma', \delta'}{c_1, \sigma, \delta \longrightarrow \sigma', \delta'} \hspace*{1cm}
+	\Rule{Seq2}{c_1 ; c_2, \sigma, \delta \longrightarrow c_1 ; c_2, \sigma', \delta'}{c_1, \sigma, \delta \longrightarrow c_1', \sigma', \delta'}
+\]
+\\
+\[
+	\Rule{AssignVar}{x := e, \sigma, \delta \longrightarrow \sigma[x \mapsto \Aa{e}{\sigma, \delta}], \delta}{x \in \var{}}
+\]
+\\
+\[
+	\Rule{AssignMem}{[e_1] := e_2, \sigma, \delta \longrightarrow \sigma, \delta[\Aa{e_1}{\sigma, \delta} \mapsto \Aa{e_2}{\sigma, \delta}]}{}
+\]
+\\
+\[
+	\Rule{If1}{\texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2, \sigma, \delta \longrightarrow c_1, \sigma, \delta}{} \quad \text{if $\Aa{e}{\sigma, \delta} = \true{}$}
+\]
+\\
+\[
+	\Rule{If2}{\texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2, \sigma, \delta \longrightarrow c_2, \sigma, \delta}{} \quad \text{if $\Aa{e}{\sigma, \delta} = \false{}$}
+\]
+\\
+\[
+	\Rule{While}{\texttt{while}~e~\texttt{do}~c, \sigma, \delta \longrightarrow \texttt{if}~e~\texttt{then}~(c; \texttt{while}~e~\texttt{do}~c)~\texttt{else}~\texttt{skip}, \sigma, \delta}{} 
+\]
+
+\paragraph{Comments}
+We define our $\state$ domain as a cartesian product for readability, the second function only describing the memory.
+Final configurations are simply states, with no more commands to execute.
+
+As expressions define both booleans and integer expressions, our $\A{}$ function can be evaluated in $\mathbb{Z}$ or $\mathbb{B}$.
+
+Our semantics is defined such that some programs may not evaluate to a final configuration. We give below a few examples:
+
+\texttt{[-3] := 0} will not evaluate, because for any state $(\sigma,\delta)$, $\delta$ is only defined on $\mathbb{N}$. Thus the \textsc{AssignMem} rule can't be applied.
+
+\texttt{x := true + 2} won't make any progress, because $\Aa{true + 2}{\sigma,\delta}$ isn't defined for any $(\delta,\sigma)$.
+
+\texttt{if 1 then c\_1 else c\_2} won't make any progress, because $\Aa{1}{\sigma,\delta}$ is neither equal to \textbf{tt} nor \textbf{ff}.
+
+Another solution could be to allow such programs to progress to an error final configuration, displaying an adequate error message.
+
+Our structural operational semantics is partial and deterministic.

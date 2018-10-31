@@ -1,0 +1,68 @@
+We first identify a set of runtime errors that we would like to detect:
+
+\begin{itemize}
+	\itemsep0em
+	\item[--] Because of references subtraction, one could try to access the memory with a strictly negative address.
+	\item[-] A variable may be used before it is initialized, which could lead to undefined behavior.
+	\item[--] If we wish to add the division operator, we may want to detect divisions by zero.
+\end{itemize}
+
+We now focus on the first error: invalid memory addresses.
+We give an abstract domain for detecting such errors as well as a static analysis, which we then apply to some examples.
+Regarding the other errors mentioned, we give later an overview of similar strategies that we could employ to detect them.
+
+\subsection*{Strictly negative memory addresses}
+
+We define the lattice $\mathcal{L} = (E, \subset, \sqcup, \sqcap)$ as illustrated in \figurename~\ref{fig:lattice} to approximate the domain range of the variable values.
+
+\begin{figure}
+	\centering
+	\begin{tikzpicture}[node distance=2cm]
+		\node (Z) at (0,0) {$\mathbb{Z}$};
+		\node[below left of=Z] (ZP) {$\mathbb{Z}^{+}$};
+		\node[below right of=Z] (ZM) {$\mathbb{Z}^{-}$};
+		\node[below left of=ZP] (ZPS) {$\mathbb{Z}^{+*}$};
+		\node[below right of=ZM] (ZMS) {$\mathbb{Z}^{-*}$};
+		\node[below left of=ZM] (ZE) {$\lbrace 0 \rbrace$};
+		\node[below of=ZE] (N) {$\bot_{int}$};
+		\draw[-] (Z) -- (ZP) -- (ZPS) -- (N) -- (ZMS) -- (ZM) -- (Z) (ZE) -- (ZP) (N) -- (ZE) -- (ZM);
+	\end{tikzpicture}
+	\caption{Abstract domain for detecting invalid memory addresses}
+	\label{fig:lattice}
+\end{figure}
+
+We now define our static analysis.
+At each program point, we define a dictionary that gives an approximation domain for each variable: $\alpha: \var{} \longrightarrow E$.
+This dictionary has a finite definition set, which is handy.
+For this reason, we do not consider memory values that we simply abstract to the domain $\mathbb{Z}$ since the number of valid addresses is infinite.
+
+If we have context $\Gamma$ and a program $c$ such that $\Gamma \vdash c$, then we define $\alpha^0$ with respects to $\Gamma$.
+
+For each program point, we now define an \emph{in} and \emph{out} analysis using the control flow graph of the program $c$ as follows:
+
+\[
+\forall x \in \var{} \quad \alpha_{in}^l(x) \mapsto
+	\begin{cases}
+		\alpha^0(x) & \text{if $l = init(c)$} \\
+		\bigsqcup\limits_{l' \rightarrow l} \alpha_{out}^{l'}(x) & \text{otherwise} \\
+	\end{cases}
+\]
+
+We now define $\alpha_{out}$ in function of $\alpha_{in}$ for the basic instructions that are not captured by the control flow graph.
+We use an approximation function $f: \exp{} \times (\var{} \longrightarrow E) \longrightarrow E$ that we define more precisely further below.
+
+\begin{itemize}
+	\itemsep0em
+	\item[--] $\left[\texttt{skip}\right]^l$: For all $x$: $\alpha_{out}^l(x) \mapsto \alpha_{in}^l(x)$
+	\item[--] $\left[x := e\right]^l$: For all $y \neq x$: $\alpha_{out}^l(y) \mapsto \alpha_{in}^l(y)$
+	
+	For x: $\alpha_{out}^l(x) \mapsto f(e, \alpha_{in}^l)$
+	\item[--] $\left[[e_1] := e_2\right]^l$: If $f(e_1, \alpha_{in}^l)$ gives an error, we return an error.
+	
+	Otherwise, for all $x$: $\alpha_{out}^l(x) \mapsto \alpha_{in}^l(x)$
+\end{itemize}
+
+In the former, $f$ is the 
+ 
+
+\paragraph{Improvements} memory with addresses initialized + booleans

@@ -1,0 +1,138 @@
+We now introduce three different types in our system:
+
+\begin{itemize}
+	\itemsep0em
+	\item[--] $\Int{}$: denotes integer values
+	\item[--] $\Ref{}$: denotes references \ie{} memory addresses
+	\item[--] $\Bool{}$: denotes boolean values (that evaluates to true or false)
+\end{itemize}
+
+We define the following typing rules for expressions, given a context $\Gamma$:
+
+\[
+\Rule{CstInt}{\Gamma \vdash n: \Int}{}
+\hspace*{1cm}
+\Rule{CstRef}{\Gamma \vdash n: \Ref}{} \quad \text{if $\N(n) \geq 0$}
+\]
+
+\[
+\Rule{CstTrue}{\Gamma \vdash \texttt{true}: \Bool}{}
+\hspace*{1cm}
+\Rule{CstFalse}{\Gamma \vdash \texttt{false}: \Bool}{}
+\]
+
+\[
+\Rule{Var}{\Gamma \vdash x: T}{\lbrace x: T \rbrace \in \Gamma}
+\hspace*{1cm}
+\Rule{CastRefToInt}{\Gamma \vdash x: \Int}{\Gamma \vdash x: \Ref}
+\]
+
+\[
+\Rule{AddInt}{\Gamma \vdash e_1 + e_2: \Int}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
+\hspace*{1cm}
+\Rule{AddRef}{\Gamma \vdash e_1 + e_2: \Ref}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
+\]
+
+\[
+\Rule{SubInt}{\Gamma \vdash e_1 - e_2: \Int}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
+\hspace*{1cm}
+\Rule{SubRef}{\Gamma \vdash e_1 - e_2: \Ref}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
+\]
+
+\[
+\Rule{TimesInt}{\Gamma \vdash e_1 \times e_2: \Int}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
+\hspace*{1cm}
+\Rule{TimesRef}{\Gamma \vdash e_1 \times e_2: \Ref}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
+\]
+
+\[
+\Rule{EqInt}{\Gamma \vdash e_1 = e_2: \Bool}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
+\hspace*{1cm}
+\Rule{EqRef}{\Gamma \vdash e_1 = e_2: \Bool}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
+\]
+
+\[
+\Rule{CompInt}{\Gamma \vdash e_1 \leq e_2: \Bool}{\Gamma \vdash e_1: \Int \quad \Gamma \vdash e_2: \Int}
+\hspace*{1cm}
+\Rule{CompRef}{\Gamma \vdash e_1 \leq e_2: \Bool}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Ref}
+\]
+
+\[
+\Rule{And}{\Gamma \vdash e_1~\texttt{and}~e_2: \Bool}{\Gamma \vdash e_1: \Bool \quad \Gamma \vdash e_2: \Bool}
+\hspace*{1cm}
+\Rule{Or}{\Gamma \vdash e_1~\texttt{or}~e_2: \Bool}{\Gamma \vdash e_1: \Bool \quad \Gamma \vdash e_2: \Bool}
+\hspace*{1cm}
+\Rule{Not}{\Gamma \vdash \texttt{not}~e: \Bool}{\Gamma \vdash e: \Bool}
+\]
+
+We can now give the type judgment for each command in the typing context $\Gamma$:
+
+\[
+	\Rule{Skip}{\Gamma \vdash \texttt{skip}}{} \hspace*{1cm}
+	\Rule{Seq}{\Gamma \vdash c_1 ; c_2}{\Gamma \vdash c_1 \quad \Gamma \vdash c_2}
+\]
+\[
+	\Rule{AssignVar}{\Gamma \vdash x := e}{\Gamma \vdash x: T \quad \Gamma \vdash e: T} \hspace*{1cm}
+	\Rule{AssignMem}{\Gamma \vdash [e_1] := e_2}{\Gamma \vdash e_1: \Ref \quad \Gamma \vdash e_2: \Int}
+\]
+\[
+	\Rule{If}{\Gamma \vdash \texttt{if}~e~\texttt{then}~c_1~\texttt{else}~c_2}{\Gamma \vdash e: \Bool \quad \Gamma \vdash c_1 \quad \Gamma \vdash c_2}
+\hspace*{1cm}
+	\Rule{While}{\Gamma \vdash \texttt{while}~e~\texttt{do}~c}{\Gamma \vdash e: \Bool \quad \Gamma \vdash c} 
+\]
+
+
+\paragraph{Comments}
+
+A program $c$ is said to be well-typed if there exists some context $\Gamma$ such that $\Gamma\vdash c$.
+A typing context is a set of pairs of variables and types $\{x:T\}$, meaning that variable $x$ has type $T$, and such that each $x$ appears at most once.
+There are simple ways to find statically such a typing context whenever it exists. One ambiguity appears when dealing with variables defined with positive constants, as they could be both $\Int$ or $\Ref$. In that case, type them $\Ref$, and you may use the \textsc{CastRefToInt} rule whenever you need an $\Int$.
+Some programs can be well-typed under several contexts, for instance \texttt{x := y} where the variables can be Integers, Booleans or References.
+
+Our typing system prevents negative constants to be used as references.
+This rules out a few programs that could have blocking semantics.
+Our reference arithmetic still allows multiplication, addition and subtraction, meaning that some well-typed programs can still go wrong.
+A solution to this issue is to forbid subtraction when dealing with references, but we decided against to keep ``reasonable'' pointer arithmetic.
+
+Some programs with non-blocking semantics won't be well-typed when it corresponds to what we consider to be programming mistakes. For instance, \texttt{x := 1; x := true} progresses with our semantics but isn't well-typed.
+
+The expression typing rules are as expected, and we can't mix boolean values with integers values for instance. Thus, the program \texttt{x := 1 + true} won't be well-typed. A good property of our type system is the following:\\
+
+\paragraph{Definition} $\sigma$ is said to be \textit{well-defined with regards to} $\Gamma$, if for all $\{x:Int\}\in\Gamma$, $\sigma(x)\in\mathbb{Z}$, for all $\{x:Ref\}\in\Gamma$, $\sigma(x)\in\mathbb{N}$ and for all $\{x:Bool\}\in\Gamma$, $\sigma(x)\in\mathbb{B}$.
+
+\paragraph{Definition} We define $\vdash'$, exactly the same as $\vdash$ but without the \textsc{SubRef} rule.
+
+\begin{thm}[Typing of Expressions]
+For all expression $e$, context $\Gamma$, type $T$ and state $(\sigma, \delta)$ and $\sigma$ well-defined with regards to $\Gamma$, we have:
+\[
+\Gamma\vdash' e : T\implies \Aa{e}{\sigma,\delta}\text{ is defined}.
+\]
+\end{thm}
+
+\begin{proof}[Proof Idea]
+This can be proved by induction on $\Gamma\vdash' e$. Because we don't allow substraction in References, References are guaranteed to be positive (defined only with positive constants, addition and multiplication). Furthermore, we know that $\delta$ is a total function of $\mathbb{N}$. Because $\sigma$ is well-defined with regards to $\Gamma$, $\sigma$ is defined with the correct type on each variable of $e$.
+\end{proof}
+
+
+\begin{thm}[Progress]
+For all program $c$, context $\Gamma$ and initial state $(\sigma_0, \delta_0) \in \state{}$ such that $\sigma_0$ well-defined with regards to $\Gamma$, we have:
+
+\begin{align*}
+  \Gamma \vdash' c \implies & \exists (\sigma, \delta) \in \state{}, \exists c', \quad c, \sigma_0, \delta_0 \longrightarrow c',\sigma, \delta \text{ and $\delta_0$ is well-defined with regards to $\Gamma$\quad} \\
+  & \textbf{or}~ \exists (\sigma, \delta) \in \state{}, \quad c, \sigma_0, \delta_0 \longrightarrow \sigma, \delta
+\end{align*}
+
+\end{thm}
+
+\begin{proof}[Proof Idea]
+  This can be proved by induction on $\Gamma \vdash' c$. For instance, if $c=c_1;c_2$, then with the \textsc{Seq} typing rule, $\Gamma\vdash' c_1$ and $\Gamma\vdash' c_2$.
+  Then by induction, either there exists $\sigma,\delta,c'$ such that $c,\sigma_0,\delta_0\longrightarrow c',\sigma,\delta$, or there exists $\sigma,\delta$ such that $c,\sigma_0,\delta_0\longrightarrow \sigma,\delta$.
+  In the first case, using the \textsc{Seq2} rule, we get that $c,\sigma_0,\delta_0\longrightarrow c,\sigma,\delta$.
+  In the second case, using the \textsc{Seq1} rule, we get that $c,\sigma_0,\delta_0\longrightarrow c_2,\sigma,\delta$.
+
+  The other cases use the \textbf{Theorem 1}: the semantics rules couldn't be applied if the expressions couldn't be evaluated.
+
+\end{proof}
+
+\paragraph{Conclusion}
+We have defined two typing relations, $\vdash$ and $\vdash'$. The most restrictive one is strong enough to guarantee progress of the well-typed programs. The other one is not guaranteed to catch every error, as pointer substraction is allowed and it is thus possible to access memory at a negative address.
