@@ -36,7 +36,7 @@ At each program point, we define a dictionary that gives an approximation domain
 This dictionary has a finite definition set, which is handy.
 For this reason, we do not consider memory values that we simply abstract to the domain $\mathbb{Z}$ since the number of valid addresses is infinite.
 
-If we have context $\Gamma$ and a program $c$ such that $\Gamma \vdash c$, then we define $\alpha^0$ with respects to $\Gamma$.
+If we have context $\Gamma$ and a program $c$ such that $\Gamma \vdash c$, then we define $\alpha^0$ with respects to $\Gamma$.\todo{what does it mean?}
 
 For each program point, we now define an \emph{in} and \emph{out} analysis using the control flow graph of the program $c$ as follows:
 
@@ -61,6 +61,7 @@ We use an approximation function $f: \exp{} \times (\var{} \longrightarrow E) \l
 	
 	Otherwise, for all $x$: $\alpha_{out}^l(x) \mapsto \alpha_{in}^l(x)$
 \end{itemize}
+\todo{not sure about this notation. Could we just write an equality?}
 
 The function $f$ approximates the domain of the expression depending on the domains of its components and is defined as one would intuitively imagine.
 A few examples are given in \tablename~\ref{tab:approx}.
@@ -102,30 +103,79 @@ However, if we consider the following program: $x:= 1 - 2; y:= [x]$, we have the
 
 \begin{align*}
 	& \alpha_{in}^1 = \lbrace x: \mathbb{Z}^{+*}, y: \mathbb{Z} \rbrace & \alpha_{out}^1 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} \rbrace \\
-	& \alpha_{in}^2 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} & \alpha_{out}^2 \longrightarrow \text{Error} \\
+	& \alpha_{in}^2 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} \rbrace & \alpha_{out}^2 \longrightarrow \text{Error} \\
 \end{align*}
 
+\todo{A bit more explanation. Why is $\alpha_{in}^1$ the way it is?}
 We obtain an error which is satisfying since the program would indeed try to use an invalid memory address.
 We can however notice that the program $x:= 2 - 1; y:= [x]$ would as well return an error whereas there is actually no problem.
 With this static analysis, we get some false negative and discard valid programs but we are sure all memory addresses are valid when no error is returned, \ie{} we get an over-estimation of valid programs regarding this type of errors.
  
 
-\paragraph{Improvements} We identify two key points where our static analysis could be improved:
+\section*{Improvements}
 
-\begin{itemize}
-	\itemsep0em
-	\item[--] Memory values: all memory values are approximated by the domain $\mathbb{Z}$.
-	We could be more precise by considering another function $\beta: E \longrightarrow E$ that would give a domain approximation for the value located in a range of memory addresses.
-	We would need to adapt the rule for $\left[[e_1] := e_2\right]^l$ where we currently do not use $f(e_2, \alpha_{in}^l)$.
-	\item[--] Boolean values: we currently consider the control flow graph but we could also give an abstract domain for booleans and define an approximation function for the different expressions.
-	We then would be more precise and sometimes be able to discard branches that we are actually sure they will not be executed.
-	For instance, the following program, detected currently as invalid, would pass the static analysis: $\texttt{if true then~} x:= [5] \texttt{~else~} x:= [1 - 2]$.
-\end{itemize}
+\subsection*{Analysing Memory values}
+All memory values are approximated by the domain $\mathbb{Z}$.
+We could be more precise by considering another function $\beta: E \longrightarrow E$ that would give a domain approximation for the value located in a range of memory addresses.
+We would need to adapt the rule for $\left[[e_1] := e_2\right]^l$ where we currently do not use $f(e_2, \alpha_{in}^l)$.
+
+
+\subsection*{Using the guards}
+One can notice that our simple static analysis does not use the guards of the \texttt{if} and \texttt{while} statements. One could use a simple lattice with $\top_{bool}, \lbrace \texttt{true} \rbrace, \lbrace \texttt{false} \rbrace, \bot_{bool}$ to abstract boolean values. This would capture new information, as \texttt{if b then $c_1$ else $c_2$} can be simplified to $c_1$ if \texttt{b} is abstracted by $\lbrace \texttt{true} \rbrace$.
+Similarly, \texttt{while b do c} can be simplified to $\texttt{skip}$ if \texttt{b} is abstracted by $\lbrace \texttt{false} \rbrace$.
+We then would be more precise and sometimes be able to discard branches that we are actually sure they will not be executed.
+For instance, the following program, detected currently as invalid, would pass the static analysis: $\texttt{if true then~} x:= [5] \texttt{~else~} x:= [1 - 2]$.
 
 \subsection*{Uninitialized variables}
 
-\todo{comments}
+So far, programs that use unitialized variables are still well-typed. Our progress theorem states that such programs will still progress if the initial configuration $(\sigma,\delta)$ contains values of the right type.
+
+One could decide to forbid such programs. To do so, one could do a simple static analysis associating a set of declared variables to each program point. Each assignment adds a variable to the set of declared variable. After merging two control flow paths the set of defined variable is the intersection. Using the value of an unitialized variable would raise an error. Of course, this analysis admits some false positives (as in the program \texttt{if true then x:=0 else skip; [0] := x;}) but its success guarantees that each variable has been initialized. 
 
 \subsection*{Division by zero}
 
-\todo{comments}
+One could also desire to add the division to integer arithmetics. Of course, programs using division by 0 would have blocking semantics. Our abstract domains would be enough to detect these cases. Dividing by a value in $\mathbb{Z}, \mathbb{Z^+}, \mathbb{Z^-}$ or $\lbrace 0 \rbrace$ would raise an error. Of course, there are still false alarms, as in \texttt{x := 3 - 2; y := 2 / x;}.
+
+
+\section*{Summary}
+  \begin{center}
+    \begin{tikzpicture}[scale=1]
+      \draw [color=red](2,0.5) circle (2.5cm);
+      \draw [color=blue](0,1.5) circle (5cm);
+      \draw (0,-0.5) circle (5cm);
+      \draw (0,1) circle (7cm);
+      \draw [color=blue] (-2,0.5) circle (2.5cm);
+      \node[] at (-2,1.8) {Well-typed programs ($\vdash'$)};
+      \node[] at (0,5.6) {Well-typed programs ($\vdash$)};
+      \node[] at (0,7.2) {Syntactically Correct Programs};
+      \node[] at (0,-4.8) {Progressing programs};
+      \node[] at (2,1.8) {Well-typed ($\vdash$) +};
+      \node[] at (2,1.4) {Static Analysis};
+      \node[circle,draw] at (6,0) {1};
+      \node[circle,draw] at (0,5) {2};
+      \node[circle,draw] at (0,-4) {3};
+      \node[circle,draw] at (0,3) {4};
+      \node[circle,draw] at (-2,0) {5};
+      \node[circle,draw] at (2,0) {6};
+    \end{tikzpicture}
+  \end{center}
+
+  
+  \paragraph{1:}
+  \texttt{x := [-3];}
+
+  \paragraph{2:}
+  \texttt{x := [1 - 3];}
+
+  \paragraph{3:}
+  \texttt{x := true; x := 1;}
+
+  \paragraph{4:}
+  \texttt{x := [3 - 1];}
+
+  \paragraph{5:}
+  \texttt{[2] := 3; x := [2]; y := [x];}
+
+  \paragraph{6:}
+  \texttt{x := [3 - 0];}
+    
