@@ -7,10 +7,6 @@ We first identify a set of runtime errors that we would like to detect:
 	\item[--] If we wish to add the division operator, we may want to detect divisions by zero.
 \end{itemize}
 
-We now focus on the first error: invalid memory addresses.
-We give an abstract domain for detecting such errors as well as a static analysis, which we then apply to some examples.
-Regarding the other errors mentioned, we give later an overview of similar strategies that we could employ to detect them.
-
 \subsection*{Strictly negative memory addresses}
 
 We define the lattice $\mathcal{L} = (E, \subset, \sqcup, \sqcap)$ as illustrated in \figurename~\ref{fig:lattice} to approximate the domain range of the variable values.
@@ -73,6 +69,9 @@ We use an approximation function $f: \exp{} \times (\var{} \longrightarrow E) \l
 The function $f$ approximates the domain of the expression depending on the domains of its components and is defined as one would intuitively imagine.
 A few examples are given in \tablename~\ref{tab:approx}.
 
+A solution to our static analysis can be found with iterative computation. The lattice is infinite but its depth is finite, meaning that we are guaranteed to converge in a finite time, and we don't need any widening operator.
+Our static analysis is correct: we can prove inductively for each instruction that abstraction's correctness is preserved.
+
 \begin{table}
 	\centering
 	\begin{tabular}{@{}p{0.15\textwidth}p{0.3\textwidth}p{0.3\textwidth}p{0.15\textwidth}@{}}
@@ -117,9 +116,12 @@ However, if we consider the following program: $x:= 1 - 2; y:= [x]$, we have the
 \end{align*}
 
 We obtain an error which is satisfying since the program would indeed try to use an invalid memory address.
-We can notice that the program $x:= 2 - 1; y:= [x]$ would pass the analysis since we would get $\alpha_{in}^2 = \lbrace x: \lbrace 1 \rbrace, y: \mathbb{Z} \rbrace$ in the send, which is fine.
-However, we can still have some valid programs that fail the analysis when loops are involved\todo{explanations}.
-With this static analysis, we get some false negative and discard valid programs but we are sure all memory addresses are valid when no error is returned, \ie{} we get an over-estimation of valid programs regarding this type of errors.
+We can notice that the program $x:= 2 - 1; y:= [x]$ would pass the analysis since we would get $\alpha_{in}^2 = \lbrace x: \lbrace 1 \rbrace, y: \mathbb{Z} \rbrace$ in the end, which is fine.
+However, we can still have some valid programs that fail the analysis when loops are involved.
+For instance in the following program:
+$$\texttt{i := 0; p := 10; while (i<p) do (x:=[p-i]; i := i+1;)}$$
+As the value of $i$ increases inside the loop, it is abstracted to $\mathbb{Z}^{+}$, and then $p-i$ is abstracted to $\mathbb{Z}$, raising an error. Using the interval domain for instance would make for a more precise analysis and allow this program.
+With this static analysis, we get some false negative and discard valid programs but we are sure that all memory accesses are valid when no error is returned.
  
 
 \section*{Improvements}
@@ -133,32 +135,36 @@ We would need to adapt the rule for $\left[[e_1] := e_2\right]^l$ where we curre
 \subsection*{Using the guards}
 One can notice that our simple static analysis does not use the guards of the \texttt{if} and \texttt{while} statements. One could use a simple lattice with $\top_{bool}, \lbrace \texttt{true} \rbrace, \lbrace \texttt{false} \rbrace, \bot_{bool}$ to abstract boolean values. This would capture new information, as \texttt{if b then $c_1$ else $c_2$} can be simplified to $c_1$ if \texttt{b} is abstracted by $\lbrace \texttt{true} \rbrace$.
 Similarly, \texttt{while b do c} can be simplified to $\texttt{skip}$ if \texttt{b} is abstracted by $\lbrace \texttt{false} \rbrace$.
-We then would be more precise and sometimes be able to discard branches that we are actually sure they will not be executed.
+We then would be more precise and sometimes be able to discard unused branches.
 For instance, the following program, detected currently as invalid, would pass the static analysis: $\texttt{if true then~} x:= [5] \texttt{~else~} x:= [1 - 2]$.
+
+Furthermore, guards could be used inside a branch or a loop to add new information. For instance, in the program \texttt{if (x=2) then y:=2/x; else skip}, we could infer that $x=2$ inside the branch and thus the division has no risk of raising an error.
 
 \subsection*{Uninitialized variables}
 
 So far, programs that use unitialized variables are still well-typed. Our progress theorem states that such programs will still progress if the initial configuration $(\sigma,\delta)$ contains values of the right type.
 
-One could decide to forbid such programs. To do so, one could do a simple static analysis associating a set of declared variables to each program point. Each assignment adds a variable to the set of declared variable. After merging two control flow paths the set of defined variable is the intersection. Using the value of an unitialized variable would raise an error. Of course, this analysis admits some false positives (as in the program \texttt{if true then x:=0 else skip; [0] := x;}) but its success guarantees that each variable has been initialized. 
+One could decide to forbid such programs. To do so, one could do a simple static analysis associating a set of declared variables to each program point. Each assignment adds a variable to the set of declared variable. After merging two control flow paths the set of defined variable is the intersection. Using the value of an unitialized variable would raise an error. Of course, this analysis admits some false alarms (as in the program \texttt{if true then x:=0 else skip; [0] := x;}) but its success guarantees that each variable has been initialized. 
 
 \subsection*{Division by zero}
 
-One could also desire to add the division to integer arithmetics. Of course, programs using division by 0 would have blocking semantics. Our abstract domains would be enough to detect these cases. Dividing by a value in $\mathbb{Z}, \mathbb{Z^+}, \mathbb{Z^-}$ or $\lbrace 0 \rbrace$ would raise an error. Of course, there are still false alarms, as in \texttt{x := 3 - 2; y := 2 / x;}.
+One could also desire to add the division to integer arithmetics. Of course, programs using division by 0 would have blocking semantics. Our abstract domains would be enough to detect these cases. Dividing by a value in $\mathbb{Z}, \mathbb{Z^+}, \mathbb{Z^-}$ or $\lbrace 0 \rbrace$ would raise an error. Of course, there are still false alarms, as in $\texttt{i := 0; p := 10; while (i<p) do (x:=x/(p-i); i := i+1;)}$.
+
 
 
 \section*{Summary}
 
-\todo{mini text}
+We present an overview of our typing systems and static analysis. Some examples show what kind of programs belong to each category.
 
   \begin{center}
-    \begin{tikzpicture}[scale=1]
+    \begin{tikzpicture}[scale=0.9]
       \draw [color=red](2,0.5) circle (2.5cm);
       \draw [color=blue](0,1.5) circle (5cm);
       \draw (0,-0.5) circle (5cm);
       \draw (0,1) circle (7cm);
       \draw [color=blue] (-2,0.5) circle (2.5cm);
-      \node[] at (-2,1.8) {Well-typed programs ($\vdash'$)};
+      \node[] at (-2,1.8) {Well-typed};
+      \node[] at (-2,1.4) {programs ($\vdash'$)};
       \node[] at (0,5.6) {Well-typed programs ($\vdash$)};
       \node[] at (0,7.2) {Syntactically Correct Programs};
       \node[] at (0,-4.8) {Progressing programs};
@@ -174,21 +180,21 @@ One could also desire to add the division to integer arithmetics. Of course, pro
   \end{center}
 
   
-  \paragraph{1:}
+  \textbf{1:}
   \texttt{x := [-3];}
 
-  \paragraph{2:}
+  \textbf{2:}
   \texttt{x := [1 - 3];}
 
-  \paragraph{3:}
+  \textbf{3:}
   \texttt{x := true; x := 1;}
 
-  \paragraph{4:}
-  \texttt{x := [3 - 1];}
+  \textbf{4:}
+  \texttt{i := 0; p := 10; while (i<p) do (x:=[p-i]; i := i+1;)}
 
-  \paragraph{5:}
+  \textbf{5:}
   \texttt{[2] := 3; x := [2]; y := [x];}
 
-  \paragraph{6:}
-  \texttt{x := [3 - 0];}
+  \textbf{6:}
+  \texttt{x := [3 - 2];}
     
