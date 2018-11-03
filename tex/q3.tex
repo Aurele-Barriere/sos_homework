@@ -23,25 +23,33 @@ We define the lattice $\mathcal{L} = (E, \subset, \sqcup, \sqcap)$ as illustrate
 		\node[below right of=Z] (ZM) {$\mathbb{Z}^{-}$};
 		\node[below left of=ZP] (ZPS) {$\mathbb{Z}^{+*}$};
 		\node[below right of=ZM] (ZMS) {$\mathbb{Z}^{-*}$};
+		\node[below right of=ZPS] (P1) {$\lbrace 1 \rbrace$};
+		\node[left of=P1] (P2) {$\lbrace 2 \rbrace$};
+		\node[left of=P2] (P3) {$\ldots$};
+		\node[below left of=ZMS] (N1) {$\lbrace -1 \rbrace$};
+		\node[right of=N1] (N2) {$\lbrace -2 \rbrace$};
+		\node[right of=N2] (N3) {$\ldots$};
 		\node[below left of=ZM] (ZE) {$\lbrace 0 \rbrace$};
-		\node[below of=ZE] (N) {$\bot_{int}$};
-		\draw[-] (Z) -- (ZP) -- (ZPS) -- (N) -- (ZMS) -- (ZM) -- (Z) (ZE) -- (ZP) (N) -- (ZE) -- (ZM);
+		\node[below right of=P1] (N) {$\bot_{int}$};
+		\draw[-] (Z) -- (ZP) -- (ZPS) -- (P1) -- (N) -- (N1) -- (ZMS) -- (ZM) -- (Z) (ZE) -- (ZP) (N) -- (ZE) -- (ZM) (ZPS) -- (P2) -- (N) -- (N2) -- (ZMS);
+		\draw[-] (ZPS) -- (P3) -- (N) -- (N3) -- (ZMS);
 	\end{tikzpicture}
 	\caption{Abstract domain for detecting invalid memory addresses}
 	\label{fig:lattice}
 \end{figure}
 
 We now define our static analysis.
-At each program point, we define a dictionary that gives an approximation domain for each variable: $\alpha: \var{} \longrightarrow E$.
+At each program point, we define a dictionary that gives an approximation domain for each numerical variable: $\alpha: \var{} \longrightarrow E$.
 This dictionary has a finite definition set, which is handy.
 For this reason, we do not consider memory values that we simply abstract to the domain $\mathbb{Z}$ since the number of valid addresses is infinite.
 
-If we have context $\Gamma$ and a program $c$ such that $\Gamma \vdash c$, then we define $\alpha^0$ with respects to $\Gamma$.\todo{what does it mean?}
+If we have context $\Gamma$ and a program $c$ such that $\Gamma \vdash c$, then we define $\alpha^0$ with respects to $\Gamma$:
+if $x: \Int \in \Gamma$ then $\alpha^0(x) = \mathbb{Z}$ and if $x: \Ref \in \Gamma$ then $\alpha^0(x) = \mathbb{Z}^{+}$.
 
 For each program point, we now define an \emph{in} and \emph{out} analysis using the control flow graph of the program $c$ as follows:
 
 \[
-\forall x \in \var{} \quad \alpha_{in}^l(x) \mapsto
+\forall x \in \var{} \quad \alpha_{in}^l(x) =
 	\begin{cases}
 		\alpha^0(x) & \text{if $l = init(c)$} \\
 		\bigsqcup\limits_{l' \rightarrow l} \alpha_{out}^{l'}(x) & \text{otherwise} \\
@@ -53,15 +61,14 @@ We use an approximation function $f: \exp{} \times (\var{} \longrightarrow E) \l
 
 \begin{itemize}
 	\itemsep0em
-	\item[--] $\left[\texttt{skip}\right]^l$: For all $x$: $\alpha_{out}^l(x) \mapsto \alpha_{in}^l(x)$
-	\item[--] $\left[x := e\right]^l$: For all $y \neq x$: $\alpha_{out}^l(y) \mapsto \alpha_{in}^l(y)$
+	\item[--] $\left[\texttt{skip}\right]^l$: For all $x$: $\alpha_{out}^l(x) = \alpha_{in}^l(x)$
+	\item[--] $\left[x := e\right]^l$: For all $y \neq x$: $\alpha_{out}^l(y) = \alpha_{in}^l(y)$
 	
 	For x: $\alpha_{out}^l(x) \mapsto f(e, \alpha_{in}^l)$
 	\item[--] $\left[[e_1] := e_2\right]^l$: If $f(e_1, \alpha_{in}^l)$ gives an error, we return an error.
 	
-	Otherwise, for all $x$: $\alpha_{out}^l(x) \mapsto \alpha_{in}^l(x)$
+	Otherwise, for all $x$: $\alpha_{out}^l(x) = \alpha_{in}^l(x)$
 \end{itemize}
-\todo{not sure about this notation. Could we just write an equality?}
 
 The function $f$ approximates the domain of the expression depending on the domains of its components and is defined as one would intuitively imagine.
 A few examples are given in \tablename~\ref{tab:approx}.
@@ -74,21 +81,24 @@ A few examples are given in \tablename~\ref{tab:approx}.
 	\midrule
 	$x$ & & & $\alpha_{in}^l(x)$ \\
 	\midrule
-	$n$ & if $\N{n} > 0$ & & $\mathbb{Z}^{+*}$ \\
-	& if $\N{n} = 0$ & & $\lbrace 0 \rbrace$ \\
+	$n$ & & & $\lbrace \N{}(n) \rbrace$ \\
 	\midrule
 	$e_1 + e_2$ & if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{+}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{+*}$ & $\mathbb{Z}^{+*}$ \\
 	& if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{+}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{-}$ & $\mathbb{Z}$ \\
+	& if $f(e_1, \alpha_{in}^l) = \lbrace x \rbrace$ & if $f(e_2, \alpha_{in}^l) = \lbrace y \rbrace$ & $\lbrace x + y \rbrace$ \\
 	\midrule
 	$e_1 - e_2$ & if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{+}$ & $\mathbb{Z}^{-*}$ \\
 	& if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{+}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{+}$ & $\mathbb{Z}$ \\
+	& if $f(e_1, \alpha_{in}^l) = \lbrace x \rbrace$ & if $f(e_2, \alpha_{in}^l) = \lbrace y \rbrace$ & $\lbrace x - y \rbrace$ \\
 	\midrule
 	$e_1 \times e_2$ & if $f(e_1, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & if $f(e_2, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & $\mathbb{Z}^{+*}$ \\
 	& if $f(e_1, \alpha_{in}^l) = \mathbb{Z}$ & if $f(e_2, \alpha_{in}^l) = \lbrace 0 \rbrace$ & $\lbrace 0 \rbrace$ \\
+	& if $f(e_1, \alpha_{in}^l) = \lbrace x \rbrace$ & if $f(e_2, \alpha_{in}^l) = \lbrace y \rbrace$ & $\lbrace x \times y \rbrace$ \\
 	\midrule
 	$[e]$ & if $f(e, \alpha_{in}^l) = \mathbb{Z}^{+}$ & & $\mathbb{Z}$ \\
 	& if $f(e, \alpha_{in}^l) = \mathbb{Z}$ & & Error \\
 	& if $f(e, \alpha_{in}^l) = \mathbb{Z}^{-*}$ & & Error \\
+	& if $f(e, \alpha_{in}^l) = \lbrace x \rbrace \wedge x < 0$ & & Error \\
 	\bottomrule
 	\end{tabular}
 	\caption{Approximation function $f$: a few examples}
@@ -102,13 +112,13 @@ The static analysis is quite trivial and returns no error as expected.
 However, if we consider the following program: $x:= 1 - 2; y:= [x]$, we have the following static analysis:
 
 \begin{align*}
-	& \alpha_{in}^1 = \lbrace x: \mathbb{Z}^{+*}, y: \mathbb{Z} \rbrace & \alpha_{out}^1 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} \rbrace \\
-	& \alpha_{in}^2 = \lbrace x: \mathbb{Z}, y: \mathbb{Z} \rbrace & \alpha_{out}^2 \longrightarrow \text{Error} \\
+	& \alpha_{in}^1 = \lbrace x: \mathbb{Z}^{+}, y: \mathbb{Z} \rbrace & \alpha_{out}^1 = \lbrace x: \lbrace -1 \rbrace, y: \mathbb{Z} \rbrace \\
+	& \alpha_{in}^2 = \lbrace x: \lbrace -1 \rbrace, y: \mathbb{Z} \rbrace & \alpha_{out}^2 \longrightarrow \text{Error} \\
 \end{align*}
 
-\todo{A bit more explanation. Why is $\alpha_{in}^1$ the way it is?}
 We obtain an error which is satisfying since the program would indeed try to use an invalid memory address.
-We can however notice that the program $x:= 2 - 1; y:= [x]$ would as well return an error whereas there is actually no problem.
+We can notice that the program $x:= 2 - 1; y:= [x]$ would pass the analysis since we would get $\alpha_{in}^2 = \lbrace x: \lbrace 1 \rbrace, y: \mathbb{Z} \rbrace$ in the send, which is fine.
+However, we can still have some valid programs that fail the analysis when loops are involved\todo{explanations}.
 With this static analysis, we get some false negative and discard valid programs but we are sure all memory addresses are valid when no error is returned, \ie{} we get an over-estimation of valid programs regarding this type of errors.
  
 
@@ -138,6 +148,9 @@ One could also desire to add the division to integer arithmetics. Of course, pro
 
 
 \section*{Summary}
+
+\todo{mini text}
+
   \begin{center}
     \begin{tikzpicture}[scale=1]
       \draw [color=red](2,0.5) circle (2.5cm);
