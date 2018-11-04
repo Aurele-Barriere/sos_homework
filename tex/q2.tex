@@ -118,7 +118,7 @@ This can be proved by induction on $\Gamma\vdash' e$. Because we don't allow sub
 For all program $c$, context $\Gamma$ and initial state $(\sigma_0, \delta_0) \in \state{}$ such that $\sigma_0$ well-defined with regards to $\Gamma$, we have:
 
 \begin{align*}
-  \Gamma \vdash' c \implies & \exists (\sigma, \delta) \in \state{}, \exists c', \quad c, \sigma_0, \delta_0 \longrightarrow c',\sigma, \delta \text{ and $\sigma_0$ is well-defined with regards to $\Gamma$\quad} \\
+  \Gamma \vdash' c \implies & \exists (\sigma, \delta) \in \state{}, \exists c', \quad c, \sigma_0, \delta_0 \longrightarrow c',\sigma, \delta \text{ and $\sigma$ is well-defined with regards to $\Gamma$\quad} \\
   & \textbf{or}~ \exists (\sigma, \delta) \in \state{}, \quad c, \sigma_0, \delta_0 \longrightarrow \sigma, \delta
 \end{align*}
 
