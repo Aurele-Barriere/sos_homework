@@ -108,7 +108,7 @@ Our static analysis is correct: we can prove inductively for each instruction th
 
 We consider the following program: $x:= 1; y:= [x]$.
 The static analysis is quite trivial and returns no error as expected.
-However, if we consider the following program: $x:= 1 - 2; y:= [x]$, we have the following static analysis:
+However, if we consider the following program: $x:= 1 - 2; y:= [x]$, we have the following solution to our static analysis with iterative computation:
 
 \begin{align*}
 	& \alpha_{in}^1 = \lbrace x: \mathbb{Z}^{+}, y: \mathbb{Z} \rbrace & \alpha_{out}^1 = \lbrace x: \lbrace -1 \rbrace, y: \mathbb{Z} \rbrace \\
