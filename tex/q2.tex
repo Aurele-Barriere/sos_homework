@@ -110,7 +110,7 @@ For all expression $e$, context $\Gamma$, type $T$ and state $(\sigma, \delta)$ 
 \end{thm}
 
 \begin{proof}[Proof Idea]
-This can be proved by induction on $\Gamma\vdash' e$. Because we don't allow substraction in References, References are guaranteed to be positive (defined only with positive constants, addition and multiplication). Furthermore, we know that $\delta$ is a total function of $\mathbb{N}$. Because $\sigma$ is well-defined with regards to $\Gamma$, $\sigma$ is defined with the correct type on each variable of $e$.
+This can be proved by induction on $\Gamma\vdash' e$. Because we don't allow subtraction in References, References are guaranteed to be positive (defined only with positive constants, addition and multiplication). Furthermore, we know that $\delta$ is a total function of $\mathbb{N}$. Because $\sigma$ is well-defined with regards to $\Gamma$, $\sigma$ is defined with the correct type on each variable of $e$.
 \end{proof}
 
 
@@ -135,4 +135,4 @@ For all program $c$, context $\Gamma$ and initial state $(\sigma_0, \delta_0) \i
 \end{proof}
 
 \paragraph{Conclusion}
-We have defined two typing relations, $\vdash$ and $\vdash'$. The most restrictive one is strong enough to guarantee progress of the well-typed programs. The other one is not guaranteed to catch every error, as pointer substraction is allowed and it is thus possible to access memory at a negative address.
+We have defined two typing relations, $\vdash$ and $\vdash'$. The most restrictive one is strong enough to guarantee progress of the well-typed programs. The other one is not guaranteed to catch every error, as pointer subtraction is allowed and it is thus possible to access memory at a negative address.

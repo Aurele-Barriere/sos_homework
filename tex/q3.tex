@@ -1,4 +1,4 @@
-We first identify a set of runtime errors that we would like to detect:
+We first identify a set of run-time errors that we would like to detect:
 
 \begin{itemize}
 	\itemsep0em
@@ -126,7 +126,7 @@ With this static analysis, we get some false negative and discard valid programs
 
 \section*{Improvements}
 
-\subsection*{Analysing Memory values}
+\subsection*{Analyzing Memory values}
 All memory values are approximated by the domain $\mathbb{Z}$.
 We could be more precise by considering another function $\beta: E \longrightarrow E$ that would give a domain approximation for the value located in a range of memory addresses.
 We would need to adapt the rule for $\left[[e_1] := e_2\right]^l$ where we currently do not use $f(e_2, \alpha_{in}^l)$.
@@ -142,13 +142,13 @@ Furthermore, guards could be used inside a branch or a loop to add new informati
 
 \subsection*{Uninitialized variables}
 
-So far, programs that use unitialized variables are still well-typed. Our progress theorem states that such programs will still progress if the initial configuration $(\sigma,\delta)$ contains values of the right type.
+So far, programs that use uninitialized variables are still well-typed. Our progress theorem states that such programs will still progress if the initial configuration $(\sigma,\delta)$ contains values of the right type.
 
-One could decide to forbid such programs. To do so, one could do a simple static analysis associating a set of declared variables to each program point. Each assignment adds a variable to the set of declared variable. After merging two control flow paths the set of defined variable is the intersection. Using the value of an unitialized variable would raise an error. Of course, this analysis admits some false alarms (as in the program \texttt{if true then x:=0 else skip; [0] := x;}) but its success guarantees that each variable has been initialized. 
+One could decide to forbid such programs. To do so, one could do a simple static analysis associating a set of declared variables to each program point. Each assignment adds a variable to the set of declared variable. After merging two control flow paths the set of defined variable is the intersection. Using the value of an uninitialized variable would raise an error. Of course, this analysis admits some false alarms (as in the program \texttt{if true then x:=0 else skip; [0] := x;}) but its success guarantees that each variable has been initialized. 
 
 \subsection*{Division by zero}
 
-One could also desire to add the division to integer arithmetics. Of course, programs using division by 0 would have blocking semantics. Our abstract domains would be enough to detect these cases. Dividing by a value in $\mathbb{Z}, \mathbb{Z^+}, \mathbb{Z^-}$ or $\lbrace 0 \rbrace$ would raise an error. Of course, there are still false alarms, as in $\texttt{i := 0; p := 10; while (i<p) do (x:=x/(p-i); i := i+1;)}$.
+One could also desire to add the division to integer arithmetic. Of course, programs using division by 0 would have blocking semantics. Our abstract domains would be enough to detect these cases. Dividing by a value in $\mathbb{Z}, \mathbb{Z^+}, \mathbb{Z^-}$ or $\lbrace 0 \rbrace$ would raise an error. Of course, there are still false alarms, as in $\texttt{i := 0; p := 10; while (i<p) do (x:=x/(p-i); i := i+1;)}$.
 
 
 
