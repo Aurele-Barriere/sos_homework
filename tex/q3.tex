@@ -154,28 +154,28 @@ One could also desire to add the division to integer arithmetic. Of course, prog
 
 \section*{Summary}
 
-We present an overview of our typing systems and static analysis. Some examples show what kind of programs belong to each category.
+We present an overview of our typing systems and static analysis. Some examples show what kind of programs belong to each category. Our static analysis allows strictly more programs than our strongest type system, whith progress still being guaranteed.
 
   \begin{center}
     \begin{tikzpicture}[scale=0.9]
-      \draw [color=red](2,0.5) circle (2.5cm);
+      \draw [color=red](0,0.5) circle (3cm);
       \draw [color=blue](0,1.5) circle (5cm);
       \draw (0,-0.5) circle (5cm);
       \draw (0,1) circle (7cm);
-      \draw [color=blue] (-2,0.5) circle (2.5cm);
-      \node[] at (-2,1.8) {Well-typed};
-      \node[] at (-2,1.4) {programs ($\vdash'$)};
+      \draw [color=blue] (0,0) circle (1.5cm);
+      \node[] at (0,0.8) {Well-typed};
+      \node[] at (0,0.4) {programs ($\vdash'$)};
       \node[] at (0,5.6) {Well-typed programs ($\vdash$)};
       \node[] at (0,7.2) {Syntactically Correct Programs};
       \node[] at (0,-4.8) {Progressing programs};
-      \node[] at (2,1.8) {Well-typed ($\vdash$) +};
-      \node[] at (2,1.4) {Static Analysis};
+      \node[] at (0,2.2) {Well-typed ($\vdash$) +};
+      \node[] at (0,1.8) {Static Analysis};
       \node[circle,draw] at (6,0) {1};
       \node[circle,draw] at (0,5) {2};
       \node[circle,draw] at (0,-4) {3};
-      \node[circle,draw] at (0,3) {4};
-      \node[circle,draw] at (-2,0) {5};
-      \node[circle,draw] at (2,0) {6};
+      \node[circle,draw] at (-4,0) {4};
+      \node[circle,draw] at (0,-0.5) {5};
+      \node[circle,draw] at (2.2,0.5) {6};
     \end{tikzpicture}
   \end{center}
 
@@ -193,7 +193,7 @@ We present an overview of our typing systems and static analysis. Some examples 
   \texttt{i := 0; p := 10; while (i<p) do (x:=[p-i]; i := i+1;)}
 
   \textbf{5:}
-  \texttt{[2] := 3; x := [2]; y := [x];}
+  \texttt{i := 0; while (i<10) do (x:=[i]; i := i+1;)}
 
   \textbf{6:}
   \texttt{x := [3 - 2];}

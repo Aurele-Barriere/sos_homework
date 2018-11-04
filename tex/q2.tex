@@ -25,6 +25,8 @@ We define the following typing rules for expressions, given a context $\Gamma$:
 \Rule{Var}{\Gamma \vdash x: T}{\lbrace x: T \rbrace \in \Gamma}
 \hspace*{1cm}
 \Rule{CastRefToInt}{\Gamma \vdash x: \Int}{\Gamma \vdash x: \Ref}
+\hspace*{1cm}
+\Rule{MemRead}{\Gamma \vdash [e]: \Int}{\Gamma \vdash e: \Ref}
 \]
 
 \[
